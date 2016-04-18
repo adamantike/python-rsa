@@ -436,11 +436,14 @@ class PrivateKey(AbstractKey):
     def __hash__(self):
         return hash((self.n, self.e, self.d, self.p, self.q, self.exp1, self.exp2, self.coef))
 
-    def blinded_decrypt(self, encrypted):
+    def blinded_decrypt(self, encrypted, use_crt=False):
         """Decrypts the message using blinding to prevent side-channel attacks.
 
         :param encrypted: the encrypted message
         :type encrypted: int
+        :param use_crt: use CRT (Chinese Remainder Theorem) to decrypt message.
+                        Defaults to `False`
+        :type use_crt: bool
 
         :returns: the decrypted message
         :rtype: int
@@ -448,15 +451,23 @@ class PrivateKey(AbstractKey):
 
         blind_r = rsa.randnum.randint(self.n - 1)
         blinded = self.blind(encrypted, blind_r)  # blind before decrypting
-        decrypted = rsa.core.decrypt_int(blinded, self.d, self.n)
+        if use_crt:
+            decrypted = rsa.core.decrypt_int(blinded, self.d, self.n)
+        else:
+            decrypted = rsa.core.decrypt_int_with_crt(blinded, self.p, self.q,
+                                                      self.exp1, self.exp2,
+                                                      self.coef)
 
         return self.unblind(decrypted, blind_r)
 
-    def blinded_encrypt(self, message):
+    def blinded_encrypt(self, message, use_crt=False):
         """Encrypts the message using blinding to prevent side-channel attacks.
 
         :param message: the message to encrypt
         :type message: int
+        :param use_crt: use CRT (Chinese Remainder Theorem) to decrypt message.
+                        Defaults to `False`
+        :type use_crt: bool
 
         :returns: the encrypted message
         :rtype: int
@@ -464,7 +475,12 @@ class PrivateKey(AbstractKey):
 
         blind_r = rsa.randnum.randint(self.n - 1)
         blinded = self.blind(message, blind_r)  # blind before encrypting
-        encrypted = rsa.core.encrypt_int(blinded, self.d, self.n)
+        if use_crt:
+            encrypted = rsa.core.encrypt_int(blinded, self.d, self.n)
+        else:
+            encrypted = rsa.core.encrypt_int_with_crt(blinded, self.p, self.q,
+                                                      self.exp1, self.exp2,
+                                                      self.coef)
         return self.unblind(encrypted, blind_r)
 
     @classmethod

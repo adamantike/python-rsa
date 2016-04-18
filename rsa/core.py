@@ -46,6 +46,30 @@ def encrypt_int(message, ekey, n):
     return pow(message, ekey, n)
 
 
+def encrypt_int_with_crt(message, p, q, exp1, exp2, coef):
+    """Encrypts a message using encryption key 'ekey', working modulo n"""
+
+    assert_int(message, 'message')
+    assert_int(p, 'p')
+    assert_int(q, 'q')
+    assert_int(exp1, 'exp1')
+    assert_int(exp2, 'exp2')
+    assert_int(coef, 'coef')
+
+    if message < 0:
+        raise ValueError('Only non-negative numbers are supported')
+
+    if message > p * q:
+        raise OverflowError("The message %i is too long for n=%i" % (message, n))
+
+    m1 = pow(message, exp1, p)
+    m2 = pow(message, exp2, q)
+    h = (coef * (m1 - m2)) % p
+
+    cyphertext = m2 + h * q
+    return cyphertext
+
+
 def decrypt_int(cyphertext, dkey, n):
     """Decrypts a cypher text using the decryption key 'dkey', working modulo n"""
 
@@ -54,4 +78,22 @@ def decrypt_int(cyphertext, dkey, n):
     assert_int(n, 'n')
 
     message = pow(cyphertext, dkey, n)
+    return message
+
+
+def decrypt_int_with_crt(cyphertext, p, q, exp1, exp2, coef):
+    """Decrypts a cypher text using the decryption key 'dkey', working modulo n"""
+
+    assert_int(cyphertext, 'cyphertext')
+    assert_int(p, 'p')
+    assert_int(q, 'q')
+    assert_int(exp1, 'exp1')
+    assert_int(exp2, 'exp2')
+    assert_int(coef, 'coef')
+
+    m1 = pow(cyphertext, exp1, p)
+    m2 = pow(cyphertext, exp2, q)
+    h = (coef * (m1 - m2)) % p
+
+    message = m2 + h * q
     return message

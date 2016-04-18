@@ -20,6 +20,7 @@ import unittest
 
 import rsa
 import rsa.core
+import rsa.randnum
 
 
 class IntegerTest(unittest.TestCase):
@@ -48,3 +49,22 @@ class IntegerTest(unittest.TestCase):
         print("\tVerified:  %d" % verified)
 
         self.assertEqual(message, verified)
+
+    def test_crt_same_output(self):
+        message = 42
+
+        encrypted = rsa.core.encrypt_int(message, self.pub.e, self.pub.n)
+
+        decrypted = rsa.core.decrypt_int(encrypted, self.priv.d, self.pub.n)
+        decrypted_crt = rsa.core.decrypt_int_with_crt(encrypted, self.priv.p,
+                                                      self.priv.q,
+                                                      self.priv.exp1,
+                                                      self.priv.exp2,
+                                                      self.priv.coef)
+
+        print("\tMessage:            %d" % message)
+        print("\tDecrypted:          %d" % decrypted)
+        print("\tDecrypted with CRT: %d" % decrypted_crt)
+
+        self.assertEqual(decrypted_crt, decrypted)
+        self.assertEqual(decrypted_crt, message)
